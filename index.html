@@ -1,189 +1,44 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Quản lý Hóa đơn & Tồn kho</title>
-  <link rel="stylesheet" href="styles.css" />
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@3.4.120/build/pdf.min.js"></script>
-  <script src="https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.23/jspdf.plugin.autotable.min.js"></script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gán máy POS</title>
   <style>
-    /* === Sidebar & Responsive Toggle === */
-    .container {
-      display: flex;
+    body {
+      font-family: sans-serif;
+      text-align: center;
+      padding: 50px;
     }
-
-    .sidebar {
-      width: 250px;
-      padding: 12px;
-      border: 1px solid #ccc;
-      position: sticky;
-      top: 0;
-      background-color: #f9f9f9;
-      height: 100vh;
-      overflow-y: auto;
-    }
-
-    .mobile-toggle {
-      display: none;
-      position: fixed;
-      top: 10px;
-      left: 10px;
-      z-index: 999;
-      padding: 6px 12px;
-      font-size: 15px;
-      border: none;
-      background: #007bff;
+    button {
+      font-size: 1.2rem;
+      padding: 15px 25px;
+      background-color: #0a8754;
       color: white;
-      border-radius: 6px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
     }
-
-    @media (max-width: 768px) {
-      .container {
-        flex-direction: column;
-      }
-
-      .sidebar {
-        position: fixed;
-        left: -260px;
-        top: 0;
-        height: 100%;
-        z-index: 998;
-        background: #fff;
-        transition: left 0.3s ease-in-out;
-        box-shadow: 2px 0 5px rgba(0,0,0,0.1);
-      }
-
-      .sidebar.show {
-        left: 0;
-      }
-
-      .mobile-toggle {
-        display: block;
-      }
+    button:hover {
+      background-color: #08764a;
     }
   </style>
 </head>
 <body>
-  <button id="toggleSidebarBtn" class="mobile-toggle">📂 Menu</button>
 
-  <div class="container">
-    <div class="sidebar">
-      <label>🗂️ File ZIP:</label>
-      <input type="file" id="zipInput" accept=".zip" multiple />
+  <h1>🎯 Đăng ký máy POS Milano</h1>
+  <p>Nhấn nút dưới đây để đánh dấu máy này là <strong>Máy POS Milano</strong>.</p>
 
-      <label style="margin-top:10px">📄 File HTML:</label>
-      <input type="file" id="htmlInput" accept=".html" />
+  <button onclick="registerPOS()">✅ Đăng ký máy POS</button>
 
-      <div id="status" style="white-space: pre-wrap; font-size: 0.9em; margin-top:10px;"></div>
-      <input type="text" id="searchInput" placeholder="Tìm kiếm Hộ Kinh Doanh..." />
-      <div id="searchResults"></div>
-      <div id="businessList"></div>
-    </div>
-
-    <div class="main-content" style="flex:1; padding: 20px;">
-      <div id="invoiceInfo"></div>
-      <div id="businessDetails">
-        <h4>Chi tiết Hộ Kinh Doanh</h4>
-        <table id="invoiceTable">
-          <thead><tr id="headerRow"></tr></thead>
-          <tbody></tbody>
-        </table>
-        <div id="autoInvoiceTotal">Tổng tiền: 0 VND</div>
-      </div>
-
-      <div id="inventoryTab" class="tab-content"></div>
-      <div id="invoicesTab" class="tab-content hidden"></div>
-      <div id="priceListTab" class="tab-content hidden"></div>
-      <div id="exportHistoryTab" class="tab-content hidden"></div>
-      <div id="exportTab" class="tab-content hidden"></div>
-
-      <div id="invoiceDetails" class="section"></div>
-
-      <div id="manualInventoryForm" class="section hidden">
-        <h4>Nhập Tồn kho Thủ công</h4>
-        <table class="compact-table">
-          <thead>
-            <tr>
-              <th>Tên hàng hóa</th><th>Đơn vị</th><th>Số lượng</th><th>Đơn giá</th><th>Thuế suất</th><th>Thành tiền</th><th>Thao tác</th>
-            </tr>
-          </thead>
-          <tbody id="manualInventoryItemsBody"></tbody>
-        </table>
-        <div class="controls">
-          <button onclick="addManualInventoryItem()">➕ Thêm sản phẩm</button>
-          <button onclick="saveManualInventory()">💾 Lưu</button>
-          <button onclick="hideManualInventoryForm()">❌ Hủy</button>
-        </div>
-      </div>
-
-      <textarea id="pdfTextArea" style="display:none;"></textarea>
-    </div>
-  </div>
+  <p id="status" style="margin-top: 20px; font-weight: bold;"></p>
 
   <script>
-    document.addEventListener('DOMContentLoaded', () => {
-      const toggleBtn = document.getElementById('toggleSidebarBtn');
-      const sidebar = document.querySelector('.sidebar');
-
-      toggleBtn.addEventListener('click', () => {
-        sidebar.classList.toggle('show');
-      });
-
-      document.addEventListener('click', (e) => {
-        if (window.innerWidth <= 768 &&
-            !sidebar.contains(e.target) &&
-            !toggleBtn.contains(e.target)) {
-          sidebar.classList.remove('show');
-        }
-      });
-
-      // ZIP xử lý
-      const zipInput = document.getElementById('zipInput');
-      if (zipInput) {
-        zipInput.addEventListener('change', handleZipUpload);
-      }
-
-      // HTML đơn lẻ
-      const htmlInput = document.getElementById('htmlInput');
-      if (htmlInput) {
-        htmlInput.addEventListener('change', async (e) => {
-          const file = e.target.files[0];
-          if (!file) return;
-          const htmlText = await file.text();
-
-          const info = extractInvoiceInfoFromHTML(htmlText);
-          const dom = new DOMParser().parseFromString(htmlText, 'text/html');
-          const rows = [...dom.querySelectorAll('table.res-tb tbody tr')];
-          const lines = rows.map(tr => {
-            return [...tr.querySelectorAll('td')].map(td => td.textContent.trim()).join(' ');
-          });
-
-          const pdfTextArea = document.getElementById('pdfTextArea');
-          if (pdfTextArea) pdfTextArea.value = lines.join('\n');
-
-          let business = businesses.find(b => b.taxCode === info.mstMua);
-          if (!business) {
-            business = {
-              id: generateUUID(),
-              name: info.tenMua,
-              taxCode: info.mstMua,
-              address: info.diachiMua
-            };
-            businesses.push(business);
-          }
-
-          parseToTable(business.id, file, info, 'input');
-          updateBusinessList();
-          showBusinessDetails(business.id);
-        });
-      }
-    });
+    function registerPOS() {
+      localStorage.setItem("deviceId", "posmilano");
+      document.getElementById("status").innerText = "✅ Máy đã được gán định danh: posmilano";
+    }
   </script>
 
-  <script src="script.js"></script>
 </body>
 </html>
