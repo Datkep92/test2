@@ -1,44 +1,300 @@
 <!DOCTYPE html>
-<html lang="vi">
+<html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Gán máy POS</title>
-  <style>
-    body {
-      font-family: sans-serif;
-      text-align: center;
-      padding: 50px;
-    }
-    button {
-      font-size: 1.2rem;
-      padding: 15px 25px;
-      background-color: #0a8754;
-      color: white;
-      border: none;
-      border-radius: 8px;
-      cursor: pointer;
-    }
-    button:hover {
-      background-color: #08764a;
-    }
-  </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Đăng Nhập - Milano 259</title>
+  <link rel="stylesheet" href="styles.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css" />
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-storage-compat.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
+  <!-- Đăng nhập -->
+  <div id="login-page" class="center-screen">
+    <h2>Đăng Nhập Hệ Thống<br>Milano Coffee</h2>
+    <input type="email" id="email" placeholder="Email" autocomplete="username" />
+    <input type="password" id="password" placeholder="Mật khẩu" autocomplete="current-password" />
+    <button onclick="login()" id="login-btn">Đăng Nhập</button>
+  </div>
 
-  <h1>🎯 Đăng ký máy POS Milano</h1>
-  <p>Nhấn nút dưới đây để đánh dấu máy này là <strong>Máy POS Milano</strong>.</p>
+  <!-- Giao diện chính -->
+  <div id="main-page" style="display: none;">
+    <header class="app-header">
+      <span>Milano 259</span>
+      <button class="logout-btn" onclick="logout()">Đăng Xuất</button>
+    </header>
 
-  <button onclick="registerPOS()">✅ Đăng ký máy POS</button>
+    <!-- Tab: Thu Chi -->
+    <section id="revenue-expense" class="tabcontent">
+      <h2>Báo cáo Thu Chi</h2>
+      <div class="card">
+        <h3>Nhập báo cáo</h3>
+        <div class="input-group">
+          <input type="number" id="opening-balance" placeholder="Số dư đầu kỳ (VND)" min="0" />
+          <button class="primary-btn small" onclick="submitField('opening-balance')">Gửi</button>
+        </div>
+        <div class="input-group">
+          <input type="number" id="revenue" placeholder="Doanh thu (VND)" min="0" />
+          <button class="primary-btn small" onclick="submitField('revenue')">Gửi</button>
+        </div>
+        <div class="input-group">
+          <input type="text" id="expense-input" placeholder="Chi phí (VD: Mua nguyên liệu: 500000)" />
+          <button class="primary-btn small" onclick="submitField('expense-input')">Gửi</button>
+        </div>
+        <div class="input-group">
+          <input type="number" id="transfer-amount" placeholder="Tiền chuyển khoản (VND)" min="0" />
+          <button class="primary-btn small" onclick="submitField('transfer-amount')">Gửi</button>
+        </div>
+        <div class="input-group">
+          <input type="number" id="closing-balance" placeholder="Số dư cuối kỳ (VND)" min="0" />
+          <button class="primary-btn small" onclick="submitField('closing-balance')">Gửi</button>
+        </div>
+        <h4>Xuất hàng</h4>
+        <div id="report-product-list" class="product-list"></div>
+        <button class="primary-btn" onclick="submitInventoryReport()">Gửi Báo Cáo Tồn Kho</button>
+      </div>
 
-  <p id="status" style="margin-top: 20px; font-weight: bold;"></p>
+      <div class="card">
+        <h3>Lọc Báo Cáo</h3>
+        <div class="input-group">
+          <input type="text" id="filter-range" placeholder="Chọn khoảng thời gian (VD: 25/07/2025 - 26/07/2025)" />
+          <button class="primary-btn" onclick="applyFilter()">Lọc</button>
+        </div>
+      </div>
 
+      <div id="revenue-expense-summary" class="card">
+        <h3>Tóm tắt Thu Chi</h3>
+      </div>
+
+      <div class="card table-section" id="shared-report-table">
+        <h3>Bảng Báo cáo Thu Chi</h3>
+      </div>
+
+      <div class="card table-section" id="transfer-details">
+        <h3>Chi tiết Giao dịch Chuyển khoản</h3>
+      </div>
+
+      <div class="card table-section" id="report-product-table">
+        <h3>Bảng Báo cáo Xuất Hàng</h3>
+      </div>
+
+      <div class="card table-section" id="history-table">
+        <h3>Lịch sử Thao tác</h3>
+      </div>
+    </section>
+
+    <!-- Tab: Quản lý Kho -->
+    <section id="inventory" class="tabcontent">
+      <div class="card">
+        <h2>Quản lý Kho</h2>
+
+        <h3>Thêm sản phẩm</h3>
+        <div class="input-group">
+          <input type="text" id="product-name" placeholder="Tên sản phẩm" />
+          <input type="number" id="product-quantity" placeholder="Số lượng" />
+          <input type="number" id="product-price" placeholder="Giá (VND)" />
+          <input type="number" id="product-low-stock-threshold" placeholder="Ngưỡng tồn thấp" />
+          <button class="primary-btn" onclick="addInventory()">Thêm sản phẩm</button>
+        </div>
+
+        <h3>Danh sách sản phẩm</h3>
+        <div id="inventory-list"></div>
+
+        <h3>Ngày mua hàng dự kiến</h3>
+        <div id="restock-schedule"></div>
+
+        <h3>Phân tích tỷ lệ bán ra</h3>
+        <div id="export-analysis"></div>
+        <canvas id="export-chart"></canvas>
+      </div>
+
+      <!-- Modal chỉnh sửa -->
+      <div id="edit-inventory-modal" class="modal">
+        <div class="modal-content">
+          <span class="close" onclick="closeModal('edit-inventory-modal')">×</span>
+          <h3>Chỉnh sửa sản phẩm</h3>
+          <input type="text" id="edit-product-name" placeholder="Tên sản phẩm" />
+          <input type="number" id="edit-product-quantity" placeholder="Số lượng" />
+          <input type="number" id="edit-product-price" placeholder="Giá (VND)" />
+          <input type="number" id="edit-product-low-stock-threshold" placeholder="Ngưỡng tồn thấp" />
+          <div class="button-group">
+            <button class="primary-btn" onclick="saveInventoryEdit()">Lưu</button>
+            <button class="secondary-btn" onclick="closeModal('edit-inventory-modal')">Hủy</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="profile" class="tabcontent">
+<div id="schedule-status-list"></div>
+  <h2>Thông tin cá nhân</h2>
+  
+  <!-- Lịch làm việc -->
+  <div class="card">
+    <h3>Lịch làm việc</h3>
+    <div id="calendar"></div>
+  </div>
+  <!-- Thông tin cá nhân -->
+<div class="avatar-section">
+      <img id="profile-avatar" src="https://placehold.co/64x64.png" alt="Avatar" class="user-avatar">
+      <input type="file" id="avatar-input" accept="image/*" onchange="uploadAvatar()">
+      <button onclick="uploadAvatar()">Cập nhật Avatar</button>
+    </div>
+  <div class="card">
+    <h3>Thông tin cá nhân</h3>
+    <div>
+      <label>Họ và tên:</label>
+      <input id="name-input" type="text" placeholder="Nhập tên">
+    </div>
+    <div>
+      <label>Số điện thoại:</label>
+      <input id="phone-input" type="text" placeholder="Nhập số điện thoại">
+    </div>
+    <div>
+      <label>Địa chỉ:</label>
+      <input id="address-input" type="text" placeholder="Nhập địa chỉ">
+    </div>
+    <button onclick="updateUserProfile()">Cập nhật</button>
+  </div>
+
+  <!-- Yêu cầu tạm ứng -->
+  <div class="card">
+    <h3>Yêu cầu tạm ứng</h3>
+    <div class="input-group">
+      <label for="advance-amount">Số tiền (VND):</label>
+      <input type="number" id="advance-amount" min="0" />
+    </div>
+    <div class="input-group">
+      <label for="advance-reason">Lý do:</label>
+      <input type="text" id="advance-reason" />
+    </div>
+    <button class="primary-btn" onclick="requestAdvance()">Gửi yêu cầu</button>
+  </div>
+
+  <!-- Thống kê -->
+  <div class="card">
+    <h3>Tính lương tạm tính</h3>
+    <div class="input-group">
+      <input type="number" id="wage-per-hour" placeholder="Tiền/giờ (VND)" />
+      <input type="number" id="hours-per-day" placeholder="Giờ/ngày" />
+      <button onclick="calculateFutureSalary()">Tính</button>
+    </div>
+    <div id="future-salary-result"></div>
+  </div>
+
+  <div class="card">
+    <h3>Ngày off và tăng ca</h3>
+    <div id="off-and-overtime"></div>
+  </div>
+
+  <section id="schedule-section">
+    <div id="schedule-requests-container">
+      <h3>Yêu Cầu Lịch Làm Việc</h3>
+      <table id="schedule-requests-table" class="table-style"></table>
+    </div>
+  </section>
+
+  <div class="card">
+    <h3>Lịch sử tạm ứng</h3>
+    <div id="advance-history-container"></div>
+  </div>
+
+  <!-- Thông báo -->
+  <div class="card">
+    <h3>Thông báo</h3>
+    <div id="notifications-container"></div>
+  </div>
+</section>
+
+<!-- Modal hành động -->
+<div id="action-modal" class="modal" style="display:none;">
+  <div class="modal-content" id="action-modal-content">
+    <span class="close" onclick="closeModal('action-modal')">×</span>
+    <!-- Nội dung popup lịch sẽ được chèn tại đây bởi JS -->
+  </div>
+<div id="toast-container"></div>
+</div>
+<div id="day-details-modal" class="modal" style="display: none;">
+  <div id="day-details-content" class="modal-content"></div>
+</div>
+<!-- Floating menu -->
+<div class="floating-menu">
+  <button id="main-float-btn" onclick="toggleMenu()">☰</button>
+  <div id="float-options" class="float-options">
+    <button onclick="openTabBubble('revenue-expense')">Thu Chi</button>
+    <button onclick="openTabBubble('inventory')">Kho</button>
+    <button onclick="openTabBubble('profile')">Cá nhân</button>
+    <button onclick="openChatModal()">
+      Chat <span id="chat-badge" class="badge" style="display: none;">0</span>
+    </button>
+  </div>
+</div>
+
+<!-- Modal Chat -->
+<div id="chat-modal" class="modal" style="display: none;">
+  <div class="modal-content">
+    <span class="close" onclick="closeModal('chat-modal')">×</span>
+    <h3>Chat</h3>
+    <div class="chat-tabs">
+      <button class="chat-tab-btn active" onclick="switchChatTab('public')">
+        <span class="group-icon">👥</span> Chat Chung
+        <span id="public-unread-badge" class="badge" style="display: none;">0</span>
+      </button>
+      <button class="chat-tab-btn" onclick="switchChatTab('private')">Chat Riêng</button>
+    </div>
+    <div id="chat-public" class="chat-content active">
+      <div id="public-messages" class="chat-messages"></div>
+      <div class="chat-input">
+        <input type="text" id="public-message-input" placeholder="Nhập tin nhắn...">
+        <button onclick="sendPublicMessage()">Gửi</button>
+      </div>
+    </div>
+    <div id="chat-private" class="chat-content" style="display: none;">
+      <div id="private-user-list" class="private-user-list"></div>
+      <div id="private-messages" class="chat-messages"></div>
+      <div class="chat-input">
+        <input type="text" id="private-message-input" placeholder="Nhập tin nhắn...">
+        <button onclick="sendPrivateMessage()">Gửi</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Toast Notification -->
+<div id="toast-container" class="toast-container"></div>
   <script>
-    function registerPOS() {
-      localStorage.setItem("deviceId", "posmilano");
-      document.getElementById("status").innerText = "✅ Máy đã được gán định danh: posmilano";
+    const firebaseConfig = {
+      apiKey: "AIzaSyDmFpKa8TpDjo3pQADaTubgVpDPOi-FPXk",
+      authDomain: "quanly-d7e54.firebaseapp.com",
+      databaseURL: "https://quanly-d7e54-default-rtdb.firebaseio.com",
+      projectId: "quanly-d7e54",
+      storageBucket: "quanly-d7e54.firebasestorage.app",
+      messagingSenderId: "482686011267",
+      appId: "1:482686011267:web:f2fe9d400fe618487a98b6",
+    };
+    try {
+      firebase.initializeApp(firebaseConfig);
+    } catch (err) {
+      console.error("Firebase init failed:", err);
     }
+    document.addEventListener("DOMContentLoaded", () => {
+      flatpickr("#filter-range", {
+        mode: "range",
+        dateFormat: "Y-m-d",
+        defaultDate: [new Date(), new Date()],
+        locale: { firstDayOfWeek: 1 },
+      });
+    });
   </script>
-
+  <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+  <script src="revenue-expense.js"></script>
+  <script src="inventory.js"></script>
+  <script src="profile.js"></script>
+<script src="chat.js"></script>
+  <script src="common.js"></script>
 </body>
 </html>
