@@ -10,7 +10,6 @@
   <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-storage-compat.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/emoji-mart@latest/dist/browser.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
@@ -218,56 +217,44 @@
 <div id="day-details-modal" class="modal" style="display: none;">
   <div id="day-details-content" class="modal-content"></div>
 </div>
-<!-- Floating menu -->
+<!-- Thêm vào trong floating-menu -->
 <div class="floating-menu">
   <button id="main-float-btn" onclick="toggleMenu()">☰</button>
   <div id="float-options" class="float-options">
     <button onclick="openTabBubble('revenue-expense')">Thu Chi</button>
     <button onclick="openTabBubble('inventory')">Kho</button>
     <button onclick="openTabBubble('profile')">Cá nhân</button>
-    <button onclick="openChatModal()">
-      Chat <span id="chat-badge" class="badge" style="display: none;">0</span>
+    <button onclick="toggleChat()">
+      Chat <span id="chat-badge" class="badge">0</span>
     </button>
   </div>
 </div>
 
-<!-- Modal chat -->
-<div class="modal" id="chat-modal">
-  <div class="modal-content">
-    <span class="close" onclick="closeModal('chat-modal')">&times;</span>
+<!-- Thêm chat container bên ngoài floating menu -->
+<div id="chat-container" class="hidden">
+  <div class="chat-header">
     <div class="chat-tabs">
       <button class="chat-tab-btn active" onclick="switchChatTab('public')">Chat Chung</button>
-      <button class="chat-tab-btn" onclick="switchChatTab('employees')">Danh Sách Nhân Viên</button>
+      <button class="chat-tab-btn" onclick="switchChatTab('employees')">Nhân viên</button>
     </div>
-    <div id="chat-public" class="chat-content" style="display: block;">
-      <div id="public-messages" style="max-height: 400px; overflow-y: auto; margin-bottom: 16px;"></div>
-      <div class="input-group">
-        <input type="file" id="public-image-input" accept="image/png,image/jpeg" style="display: none;">
-        <button class="icon-btn" onclick="document.getElementById('public-image-input').click()">📷</button>
-        <button class="icon-btn" id="public-emoji-btn">😊</button>
-        <input type="text" id="public-message-input" placeholder="Nhập tin nhắn...">
-        <button class="primary-btn" onclick="sendPublicMessage()">Gửi</button>
-      </div>
-      <div id="public-emoji-picker" style="display: none;"></div>
-    </div>
-    <div id="chat-employees" class="chat-content" style="display: none;">
-      <div id="employee-list" style="max-height: 400px; overflow-y: auto;"></div>
-      <div id="chat-private" style="display: none;">
-        <h3 id="private-chat-title">Chat với <span id="private-user-name"></span></h3>
-        <button onclick="switchChatTab('employees')" style="margin-bottom: 10px;">Quay lại danh sách</button>
-        <div id="private-messages" style="max-height: 350px; overflow-y: auto; margin-bottom: 16px;"></div>
-        <div class="input-group">
-          <input type="file" id="private-image-input" accept="image/png,image/jpeg" style="display: none;">
-          <button class="icon-btn" onclick="document.getElementById('private-image-input').click()">📷</button>
-          <button class="icon-btn" id="private-emoji-btn">😊</button>
-          <input type="text" id="private-message-input" placeholder="Nhập tin nhắn...">
-          <button class="primary-btn" onclick="sendPrivateMessage()">Gửi</button>
-        </div>
-        <div id="private-emoji-picker" style="display: none;"></div>
-      </div>
+    <button class="close-btn" onclick="toggleChat()">×</button>
+  </div>
+  
+  <div id="chat-public" class="chat-content">
+    <div id="public-messages" class="message-container"></div>
+    <div class="message-input-container">
+      <input type="text" id="public-message-input" placeholder="Nhập tin nhắn..." onkeypress="handlePublicMessageKeyPress(event)">
+      <button class="send-btn" onclick="sendPublicMessage()">Gửi</button>
     </div>
   </div>
+  
+  <div id="chat-employees" class="chat-content hidden">
+    <div id="employee-list" class="employee-list"></div>
+  </div>
 </div>
+
+<!-- Notification container -->
+<div id="notification-container"></div>
 <!-- Toast Notification -->
 <div id="toast-container" class="toast-container"></div>
   <script>
@@ -285,12 +272,20 @@
     } catch (err) {
       console.error("Firebase init failed:", err);
     }
+    document.addEventListener("DOMContentLoaded", () => {
+      flatpickr("#filter-range", {
+        mode: "range",
+        dateFormat: "Y-m-d",
+        defaultDate: [new Date(), new Date()],
+        locale: { firstDayOfWeek: 1 },
+      });
+    });
   </script>
   <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
-  <script src="common.js"></script>
   <script src="revenue-expense.js"></script>
   <script src="inventory.js"></script>
   <script src="profile.js"></script>
-  <script src="chat.js"></script>
-</body>
+<script src="chat.js"></script>
+  <script src="common.js"></script>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9686fafcabd28512',t:'MTc1NDA2ODU1Ni4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
 </html>

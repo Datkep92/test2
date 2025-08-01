@@ -342,6 +342,9 @@ function sendNotification(recipient, message) {
 }
 function loadFirebaseData(callback) {
   auth.onAuthStateChanged(user => {
+if (typeof setupChatNotifications === "function") {
+  setupChatNotifications();
+}
     if (!user) {
       console.log("❌ User not logged in");
       return;
