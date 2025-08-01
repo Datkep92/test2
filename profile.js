@@ -745,41 +745,6 @@ function renderScheduleRequests() {
     ` : "<p>Chưa có yêu cầu lịch làm việc.</p>"}
   `;
 }
-function uploadAvatar() {
-  const input = document.getElementById('avatar-input');
-  const file = input.files[0];
-  if (!file) {
-    showToastNotification('Vui lòng chọn một ảnh!');
-    return;
-  }
-  const userId = auth.currentUser?.uid;
-  if (!userId) {
-    showToastNotification('Chưa đăng nhập!');
-    return;
-  }
-  const storageRef = firebase.storage().ref(`avatars/${userId}`);
-  storageRef.put(file).then(snapshot => {
-    return snapshot.ref.getDownloadURL();
-  }).then(url => {
-    db.ref(`users/${userId}/avatar`).set(url).then(() => {
-      globalEmployeeData = globalEmployeeData.map(user =>
-        user.id === userId ? { ...user, avatar: url } : user
-      );
-      document.getElementById('profile-avatar').src = url;
-      showToastNotification('Cập nhật avatar thành công!');
-      if (typeof loadPrivateUserList === 'function') {
-        loadPrivateUserList();
-      }
-    }).catch(err => {
-      showToastNotification('Lỗi khi cập nhật avatar!');
-      console.error('❌ Error updating avatar URL:', err.message);
-    });
-  }).catch(err => {
-    showToastNotification('Lỗi khi tải ảnh lên!');
-    console.error('❌ Error uploading avatar:', err.message);
-  });
-}
-
 // Sửa hàm showScheduleActionModal
 function showScheduleActionModal(scheduleId, action) {
   const modal = document.getElementById("action-modal");

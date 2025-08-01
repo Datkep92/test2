@@ -6,12 +6,15 @@
   <title>Đăng Nhập - Milano 259</title>
   <link rel="stylesheet" href="styles.css" />
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/emoji-mart@latest/css/emoji-mart.css">
   <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-storage-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-storage-compat.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/emoji-mart@latest/dist/browser.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
+
 <body>
   <!-- Đăng nhập -->
   <div id="login-page" class="center-screen">
@@ -130,7 +133,6 @@
     </section>
 
     <section id="profile" class="tabcontent">
-<div id="schedule-status-list"></div>
   <h2>Thông tin cá nhân</h2>
   
   <!-- Lịch làm việc -->
@@ -139,11 +141,6 @@
     <div id="calendar"></div>
   </div>
   <!-- Thông tin cá nhân -->
-<div class="avatar-section">
-      <img id="profile-avatar" src="https://placehold.co/64x64.png" alt="Avatar" class="user-avatar">
-      <input type="file" id="avatar-input" accept="image/*" onchange="uploadAvatar()">
-      <button onclick="uploadAvatar()">Cập nhật Avatar</button>
-    </div>
   <div class="card">
     <h3>Thông tin cá nhân</h3>
     <div>
@@ -234,36 +231,43 @@
   </div>
 </div>
 
-<!-- Modal Chat -->
-<div id="chat-modal" class="modal" style="display: none;">
+<!-- Modal chat -->
+<div class="modal" id="chat-modal">
   <div class="modal-content">
-    <span class="close" onclick="closeModal('chat-modal')">×</span>
-    <h3>Chat</h3>
+    <span class="close" onclick="closeModal('chat-modal')">&times;</span>
     <div class="chat-tabs">
-      <button class="chat-tab-btn active" onclick="switchChatTab('public')">
-        <span class="group-icon">👥</span> Chat Chung
-        <span id="public-unread-badge" class="badge" style="display: none;">0</span>
-      </button>
-      <button class="chat-tab-btn" onclick="switchChatTab('private')">Chat Riêng</button>
+      <button class="chat-tab-btn active" onclick="switchChatTab('public')">Chat Chung</button>
+      <button class="chat-tab-btn" onclick="switchChatTab('employees')">Danh Sách Nhân Viên</button>
     </div>
-    <div id="chat-public" class="chat-content active">
-      <div id="public-messages" class="chat-messages"></div>
-      <div class="chat-input">
+    <div id="chat-public" class="chat-content" style="display: block;">
+      <div id="public-messages" style="max-height: 400px; overflow-y: auto; margin-bottom: 16px;"></div>
+      <div class="input-group">
+        <input type="file" id="public-image-input" accept="image/png,image/jpeg" style="display: none;">
+        <button class="icon-btn" onclick="document.getElementById('public-image-input').click()">📷</button>
+        <button class="icon-btn" id="public-emoji-btn">😊</button>
         <input type="text" id="public-message-input" placeholder="Nhập tin nhắn...">
-        <button onclick="sendPublicMessage()">Gửi</button>
+        <button class="primary-btn" onclick="sendPublicMessage()">Gửi</button>
       </div>
+      <div id="public-emoji-picker" style="display: none;"></div>
     </div>
-    <div id="chat-private" class="chat-content" style="display: none;">
-      <div id="private-user-list" class="private-user-list"></div>
-      <div id="private-messages" class="chat-messages"></div>
-      <div class="chat-input">
-        <input type="text" id="private-message-input" placeholder="Nhập tin nhắn...">
-        <button onclick="sendPrivateMessage()">Gửi</button>
+    <div id="chat-employees" class="chat-content" style="display: none;">
+      <div id="employee-list" style="max-height: 400px; overflow-y: auto;"></div>
+      <div id="chat-private" style="display: none;">
+        <h3 id="private-chat-title">Chat với <span id="private-user-name"></span></h3>
+        <button onclick="switchChatTab('employees')" style="margin-bottom: 10px;">Quay lại danh sách</button>
+        <div id="private-messages" style="max-height: 350px; overflow-y: auto; margin-bottom: 16px;"></div>
+        <div class="input-group">
+          <input type="file" id="private-image-input" accept="image/png,image/jpeg" style="display: none;">
+          <button class="icon-btn" onclick="document.getElementById('private-image-input').click()">📷</button>
+          <button class="icon-btn" id="private-emoji-btn">😊</button>
+          <input type="text" id="private-message-input" placeholder="Nhập tin nhắn...">
+          <button class="primary-btn" onclick="sendPrivateMessage()">Gửi</button>
+        </div>
+        <div id="private-emoji-picker" style="display: none;"></div>
       </div>
     </div>
   </div>
 </div>
-
 <!-- Toast Notification -->
 <div id="toast-container" class="toast-container"></div>
   <script>
@@ -281,20 +285,12 @@
     } catch (err) {
       console.error("Firebase init failed:", err);
     }
-    document.addEventListener("DOMContentLoaded", () => {
-      flatpickr("#filter-range", {
-        mode: "range",
-        dateFormat: "Y-m-d",
-        defaultDate: [new Date(), new Date()],
-        locale: { firstDayOfWeek: 1 },
-      });
-    });
   </script>
   <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+  <script src="common.js"></script>
   <script src="revenue-expense.js"></script>
   <script src="inventory.js"></script>
   <script src="profile.js"></script>
-<script src="chat.js"></script>
-  <script src="common.js"></script>
+  <script src="chat.js"></script>
 </body>
 </html>

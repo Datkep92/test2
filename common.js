@@ -279,10 +279,6 @@ function loadEmployeeInfo() {
   if (!userId || !isEmployeeDataLoaded) return;
   const employee = globalEmployeeData.find(e => e.id === userId);
   if (!employee) return;
-  const avatarImg = document.getElementById('profile-avatar');
-  if (avatarImg) {
-    avatarImg.src = employee.avatar || 'https://placehold.co/64x64.png';
-  }
   const user = auth.currentUser;
   if (!user) return;
   db.ref(`users/${user.uid}`).once("value").then(snapshot => {
@@ -297,7 +293,6 @@ function loadEmployeeInfo() {
     }
   }).catch(err => console.error("Lỗi khi load thông tin nhân viên:", err));
 }
-
 function parseEntry(text) {
   if (!text || typeof text !== 'string' || text.trim() === '') {
     return { money: 0, note: "", error: false };
