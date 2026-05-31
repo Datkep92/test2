@@ -1,296 +1,140 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="vi">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>Đăng Nhập - Milano 259</title>
-  <link rel="stylesheet" href="styles.css" />
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css" />
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/emoji-mart@latest/css/emoji-mart.css">
-<link rel="stylesheet" href="styles.css?v=1">
-  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/emoji-mart@latest/dist/browser.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+
+<title>PWA Test</title>
+
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="PWA Test">
+
+<meta name="theme-color" content="#2196f3">
+
+<link rel="manifest" href="manifest.json">
+
+<style>
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+    font-family:-apple-system,BlinkMacSystemFont,sans-serif;
+}
+
+body{
+    background:#f5f5f5;
+    min-height:100vh;
+}
+
+.header{
+    padding:env(safe-area-inset-top) 20px 20px;
+    background:#2196f3;
+    color:#fff;
+    text-align:center;
+}
+
+.container{
+    padding:20px;
+}
+
+.card{
+    background:#fff;
+    border-radius:12px;
+    padding:20px;
+    margin-bottom:15px;
+    box-shadow:0 2px 10px rgba(0,0,0,.08);
+}
+
+.btn{
+    width:100%;
+    border:none;
+    background:#2196f3;
+    color:#fff;
+    padding:15px;
+    border-radius:10px;
+    font-size:16px;
+    margin-top:10px;
+}
+
+.status{
+    margin-top:15px;
+    padding:10px;
+    border-radius:8px;
+    background:#eee;
+}
+
+.fullscreen{
+    position:fixed;
+    left:0;
+    right:0;
+    bottom:0;
+    padding:15px;
+    text-align:center;
+    background:#fff;
+    border-top:1px solid #ddd;
+}
+</style>
 </head>
-
 <body>
-  <!-- Đăng nhập -->
-  <div id="login-page" class="center-screen">
-  <div class="login-container">
-    <h2>Đăng Nhập Hệ Thống<br>Milano Coffee</h2>
-    <div class="input-container">
-      <input type="email" id="email" placeholder="Email" autocomplete="username" />
-      <input type="password" id="password" placeholder="Mật khẩu" autocomplete="current-password" />
-      <button onclick="login()" id="login-btn">Đăng Nhập</button>
-    </div>
-  </div>
+
+<div class="header">
+    <h1>PWA TEST</h1>
+    <p>Kiểm tra ẩn URL trên iPhone</p>
 </div>
 
-  <!-- Giao diện chính -->
-  <div id="main-page" style="display: none;">
-    <header class="app-header">
-      <span>Milano 259</span>
-      <button class="logout-btn" onclick="logout()">Đăng Xuất</button>
-    </header>
+<div class="container">
 
-    <!-- Tab: Thu Chi -->
-    <section id="revenue-expense" class="tabcontent">
-      <h2>Báo cáo Thu Chi</h2>
-      <div class="card">
-        <h3>Nhập báo cáo</h3>
-        <div class="input-group">
-          <input type="number" id="opening-balance" placeholder="Số dư đầu kỳ (VND)" min="0" />
-          <button class="primary-btn small" onclick="submitField('opening-balance')">Gửi</button>
-        </div>
-        <div class="input-group">
-          <input type="number" id="revenue" placeholder="Doanh thu (VND)" min="0" />
-          <button class="primary-btn small" onclick="submitField('revenue')">Gửi</button>
-        </div>
-        <div class="input-group">
-          <input type="text" id="expense-input" placeholder="Chi phí (VD: Mua nguyên liệu: 500000)" />
-          <button class="primary-btn small" onclick="submitField('expense-input')">Gửi</button>
-        </div>
-        <div class="input-group">
-          <input type="number" id="transfer-amount" placeholder="Tiền chuyển khoản (VND)" min="0" />
-          <button class="primary-btn small" onclick="submitField('transfer-amount')">Gửi</button>
-        </div>
-        <div class="input-group">
-          <input type="number" id="closing-balance" placeholder="Số dư cuối kỳ (VND)" min="0" />
-          <button class="primary-btn small" onclick="submitField('closing-balance')">Gửi</button>
-        </div>
-        <h4>Xuất hàng</h4>
-        <div id="report-product-list" class="product-list"></div>
-        <button class="primary-btn" onclick="submitInventoryReport()">Gửi Báo Cáo Tồn Kho</button>
-      </div>
-
-      <div class="card">
-        <h3>Lọc Báo Cáo</h3>
-        <div class="input-group">
-          <input type="text" id="filter-range" placeholder="Chọn khoảng thời gian (VD: 25/07/2025 - 26/07/2025)" />
-          <button class="primary-btn" onclick="applyFilter()">Lọc</button>
-        </div>
-      </div>
-
-      <div id="revenue-expense-summary" class="card">
-        <h3>Tóm tắt Thu Chi</h3>
-      </div>
-
-      <div class="card table-section" id="shared-report-table">
-        <h3>Bảng Báo cáo Thu Chi</h3>
-      </div>
-
-      <div class="card table-section" id="transfer-details">
-        <h3>Chi tiết Giao dịch Chuyển khoản</h3>
-      </div>
-
-      <div class="card table-section" id="report-product-table">
-        <h3>Bảng Báo cáo Xuất Hàng</h3>
-      </div>
-
-      <div class="card table-section" id="history-table">
-        <h3>Lịch sử Thao tác</h3>
-      </div>
-    </section>
-
-    <!-- Tab: Quản lý Kho -->
-    <section id="inventory" class="tabcontent">
-      <div class="card">
-        <h2>Quản lý Kho</h2>
-
-        <h3>Thêm sản phẩm</h3>
-        <div class="input-group">
-          <input type="text" id="product-name" placeholder="Tên sản phẩm" />
-          <input type="number" id="product-quantity" placeholder="Số lượng" />
-          <input type="number" id="product-price" placeholder="Giá (VND)" />
-          <input type="number" id="product-low-stock-threshold" placeholder="Ngưỡng tồn thấp" />
-          <button class="primary-btn" onclick="addInventory()">Thêm sản phẩm</button>
-        </div>
-
-        <h3>Danh sách sản phẩm</h3>
-        <div id="inventory-list"></div>
-
-        <h3>Ngày mua hàng dự kiến</h3>
-        <div id="restock-schedule"></div>
-
-        <h3>Phân tích tỷ lệ bán ra</h3>
-        <div id="export-analysis"></div>
-        <canvas id="export-chart"></canvas>
-      </div>
-
-      <!-- Modal chỉnh sửa -->
-      <div id="edit-inventory-modal" class="modal">
-        <div class="modal-content">
-          <span class="close" onclick="closeModal('edit-inventory-modal')">×</span>
-          <h3>Chỉnh sửa sản phẩm</h3>
-          <input type="text" id="edit-product-name" placeholder="Tên sản phẩm" />
-          <input type="number" id="edit-product-quantity" placeholder="Số lượng" />
-          <input type="number" id="edit-product-price" placeholder="Giá (VND)" />
-          <input type="number" id="edit-product-low-stock-threshold" placeholder="Ngưỡng tồn thấp" />
-          <div class="button-group">
-            <button class="primary-btn" onclick="saveInventoryEdit()">Lưu</button>
-            <button class="secondary-btn" onclick="closeModal('edit-inventory-modal')">Hủy</button>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <section id="profile" class="tabcontent">
-  <h2>Thông tin cá nhân</h2>
-  
-  <!-- Lịch làm việc -->
-  <div class="card">
-    <h3>Lịch làm việc</h3>
-    <div id="calendar"></div>
-  </div>
-  <!-- Thông tin cá nhân -->
-  <div class="card">
-    <h3>Thông tin cá nhân</h3>
-    <div>
-      <label>Họ và tên:</label>
-      <input id="name-input" type="text" placeholder="Nhập tên">
+    <div class="card">
+        <h3>Trạng thái ứng dụng</h3>
+        <div id="mode" class="status">Đang kiểm tra...</div>
     </div>
-    <div>
-      <label>Số điện thoại:</label>
-      <input id="phone-input" type="text" placeholder="Nhập số điện thoại">
+
+    <div class="card">
+        <h3>Thông tin thiết bị</h3>
+        <div id="device"></div>
     </div>
-    <div>
-      <label>Địa chỉ:</label>
-      <input id="address-input" type="text" placeholder="Nhập địa chỉ">
+
+    <div class="card">
+        <button class="btn" onclick="alert('PWA hoạt động bình thường')">
+            Test Nút Bấm
+        </button>
     </div>
-    <button onclick="updateUserProfile()">Cập nhật</button>
-  </div>
 
-  <!-- Yêu cầu tạm ứng -->
-  <div class="card">
-    <h3>Yêu cầu tạm ứng</h3>
-    <div class="input-group">
-      <label for="advance-amount">Số tiền (VND):</label>
-      <input type="number" id="advance-amount" min="0" />
-    </div>
-    <div class="input-group">
-      <label for="advance-reason">Lý do:</label>
-      <input type="text" id="advance-reason" />
-    </div>
-    <button class="primary-btn" onclick="requestAdvance()">Gửi yêu cầu</button>
-  </div>
-
-  <!-- Thống kê -->
-  <div class="card">
-    <h3>Tính lương tạm tính</h3>
-    <div class="input-group">
-      <input type="number" id="wage-per-hour" placeholder="Tiền/giờ (VND)" />
-      <input type="number" id="hours-per-day" placeholder="Giờ/ngày" />
-      <button onclick="calculateFutureSalary()">Tính</button>
-    </div>
-    <div id="future-salary-result"></div>
-  </div>
-
-  <div class="card">
-    <h3>Ngày off và tăng ca</h3>
-    <div id="off-and-overtime"></div>
-  </div>
-
-  <section id="schedule-section">
-    <div id="schedule-requests-container">
-      <h3>Yêu Cầu Lịch Làm Việc</h3>
-      <table id="schedule-requests-table" class="table-style"></table>
-    </div>
-  </section>
-
-  <div class="card">
-    <h3>Lịch sử tạm ứng</h3>
-    <div id="advance-history-container"></div>
-  </div>
-
-  <!-- Thông báo -->
-  <div class="card">
-    <h3>Thông báo</h3>
-    <div id="notifications-container"></div>
-  </div>
-</section>
-
-<!-- Modal hành động -->
-<div id="action-modal" class="modal" style="display:none;">
-  <div class="modal-content" id="action-modal-content">
-    <span class="close" onclick="closeModal('action-modal')">×</span>
-    <!-- Nội dung popup lịch sẽ được chèn tại đây bởi JS -->
-  </div>
-<div id="toast-container"></div>
-</div>
-<div id="day-details-modal" class="modal" style="display: none;">
-  <div id="day-details-content" class="modal-content"></div>
-</div>
-<!-- Thêm vào trong floating-menu -->
-<div class="floating-menu">
-  <button id="main-float-btn" onclick="toggleMenu()">☰</button>
-  <div id="float-options" class="float-options">
-    <button onclick="openTabBubble('revenue-expense')">Thu Chi</button>
-    <button onclick="openTabBubble('inventory')">Kho</button>
-    <button onclick="openTabBubble('profile')">Cá nhân</button>
-    <button onclick="toggleChat()">
-      Chat <span id="chat-badge" class="badge">0</span>
-    </button>
-  </div>
 </div>
 
-<!-- Thêm chat container bên ngoài floating menu -->
-<div id="chat-container" class="hidden">
-  <div class="chat-header">
-    <div class="chat-tabs">
-      <button class="chat-tab-btn active" onclick="switchChatTab('public')">Chat Chung</button>
-      <button class="chat-tab-btn" onclick="switchChatTab('employees')">Nhân viên</button>
-    </div>
-    <button class="close-btn" onclick="toggleChat()">×</button>
-  </div>
-  
-  <div id="chat-public" class="chat-content">
-    <div id="public-messages" class="message-container"></div>
-    <div class="message-input-container">
-      <input type="text" id="public-message-input" placeholder="Nhập tin nhắn..." onkeypress="handlePublicMessageKeyPress(event)">
-      <button class="send-btn" onclick="sendPublicMessage()">Gửi</button>
-    </div>
-  </div>
-  
-  <div id="chat-employees" class="chat-content hidden">
-    <div id="employee-list" class="employee-list"></div>
-  </div>
+<div class="fullscreen">
+    Nếu đang thấy thanh URL → hãy thêm vào Màn hình chính rồi mở lại từ icon.
 </div>
 
-<!-- Notification container -->
-<div id="notification-container"></div>
-<!-- Toast Notification -->
-<div id="toast-container" class="toast-container"></div>
-  <script>
-    const firebaseConfig = {
-      apiKey: "AIzaSyDmFpKa8TpDjo3pQADaTubgVpDPOi-FPXk",
-      authDomain: "quanly-d7e54.firebaseapp.com",
-      databaseURL: "https://quanly-d7e54-default-rtdb.firebaseio.com",
-      projectId: "quanly-d7e54",
-      storageBucket: "quanly-d7e54.firebasestorage.app",
-      messagingSenderId: "482686011267",
-      appId: "1:482686011267:web:f2fe9d400fe618487a98b6",
-    };
-    try {
-      firebase.initializeApp(firebaseConfig);
-    } catch (err) {
-      console.error("Firebase init failed:", err);
+<script>
+function checkPWA() {
+    const mode = document.getElementById("mode");
+
+    const isStandalone =
+        window.navigator.standalone ||
+        window.matchMedia("(display-mode: standalone)").matches;
+
+    if (isStandalone) {
+        mode.innerHTML = `
+            <b>✅ ĐANG CHẠY DẠNG APP</b><br>
+            Thanh URL đã được ẩn.
+        `;
+    } else {
+        mode.innerHTML = `
+            <b>⚠️ ĐANG CHẠY TRONG SAFARI</b><br>
+            Thanh URL vẫn hiển thị.
+        `;
     }
-    document.addEventListener("DOMContentLoaded", () => {
-      flatpickr("#filter-range", {
-        mode: "range",
-        dateFormat: "Y-m-d",
-        defaultDate: [new Date(), new Date()],
-        locale: { firstDayOfWeek: 1 },
-      });
-    });
-  </script>
-  <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
-  <script src="revenue-expense.js"></script>
-  <script src="inventory.js"></script>
-  <script src="profile.js"></script>
-<script src="chat.js"></script>
-  <script src="common.js"></script>
-<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'9686fafcabd28512',t:'MTc1NDA2ODU1Ni4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+}
+
+document.getElementById("device").innerHTML = `
+    User Agent:<br><br>
+    ${navigator.userAgent}
+`;
+
+checkPWA();
+</script>
+
+</body>
 </html>
